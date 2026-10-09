@@ -29,3 +29,7 @@ management:
     web:
       exposure:
         include: '*'
+
+jwt:
+  secret: ${JWT_SECRET:UnbilUyP9cRIOj4DHRgQnOjXu8+4aJmqCGLAw73nzHs=}
+  expiration: ${JWT_EXPIRATION:15m}

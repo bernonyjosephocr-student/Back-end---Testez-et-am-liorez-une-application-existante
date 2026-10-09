@@ -28,8 +28,10 @@ public class UserController {
     }
 
     @PostMapping("/api/login")
-    public ResponseEntity<?> login(LoginRequestDTO loginRequestDTO) {
-        String jwtToken = userService.login(loginRequestDTO.getLogin(), loginRequestDTO.getPassword());
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequestDTO) {
+        String login = loginRequestDTO.getLogin();
+        String password = loginRequestDTO.getPassword();
+        String jwtToken = userService.login(login, password);
         return ResponseEntity.ok(jwtToken);
     }
 

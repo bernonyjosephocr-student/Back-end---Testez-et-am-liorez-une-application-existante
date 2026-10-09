@@ -16,7 +16,9 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -34,9 +36,17 @@ public class UserControllerTest {
     private static final String PASSWORD = "password";
 
 
-    @Container
-    static MySQLContainer mySQLContainer = new MySQLContainer("mysql:latest");
-
+    @Container    
+    //static MySQLContainer mySQLContainer = new MySQLContainer("mysql:8.4.0");
+    static GenericContainer<?> mysql =
+        new GenericContainer<>("mysql:26.7.0")
+                .withEnv("MYSQL_DATABASE", "test")
+                .withEnv("MYSQL_USER", "test")
+                .withEnv("MYSQL_PASSWORD", "test")
+                .withEnv("MYSQL_ROOT_PASSWORD", "root")
+                .withExposedPorts(3306)
+                .waitingFor(Wait.forListeningPort());
+               
     @Autowired
     private UserService userService;
     @Autowired
@@ -46,13 +56,27 @@ public class UserControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @DynamicPropertySource
-    static void configureTestProperties(DynamicPropertyRegistry registry) {
+/*     static void configureTestProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", () -> mySQLContainer.getJdbcUrl());
         registry.add("spring.datasource.username", () -> mySQLContainer.getUsername());
         registry.add("spring.datasource.password", () -> mySQLContainer.getPassword());
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create");
 
+    } */
+    @DynamicPropertySource
+    static void configureTestProperties(DynamicPropertyRegistry registry) {
+        registry.add(
+                "spring.datasource.url",
+                () -> "jdbc:mysql://"
+                        + mysql.getHost()
+                        + ":"
+                        + mysql.getMappedPort(3306)
+                        + "/test"
+        );
+
+        registry.add("spring.datasource.username", () -> "test");
+        registry.add("spring.datasource.password", () -> "test");
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create");
     }
 
     @AfterEach
