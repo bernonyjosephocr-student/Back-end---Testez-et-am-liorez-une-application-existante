@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import com.openclassrooms.etudiant.exception.DuplicateStudentException;
+
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 
@@ -50,6 +52,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         logError(runtimeException);
         return handleExceptionInternal(runtimeException, "Internal Server error", new HttpHeaders(),
                 HttpStatus.INTERNAL_SERVER_ERROR, request);
+    }
+    
+    @ResponseStatus (HttpStatus.CONFLICT)
+    @ExceptionHandler( value = {DuplicateStudentException.class})
+    protected ResponseEntity<String> handleDuplicateStudent(DuplicateStudentException exception) {
+        logError(exception);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(exception.getMessage());
     }
 
     private void logError(Exception exception) {

@@ -101,19 +101,12 @@ public class UserControllerTest {
     @Test
     public void registerAlreadyExistUser() throws Exception {
         // GIVEN
-        User user = new User();
-        user.setFirstName(FIRST_NAME);
-        user.setLastName(LAST_NAME);
-        user.setLogin(LOGIN);
-        user.setPassword(PASSWORD);
-        userService.register(user);
-
         RegisterDTO registerDTO = new RegisterDTO();
         registerDTO.setFirstName(FIRST_NAME);
         registerDTO.setLastName(LAST_NAME);
         registerDTO.setLogin(LOGIN);
         registerDTO.setPassword(PASSWORD);
-
+        userService.register(registerDTO);
         // WHEN
         mockMvc.perform(MockMvcRequestBuilders.post(URL)
                         .content(objectMapper.writeValueAsString(registerDTO))

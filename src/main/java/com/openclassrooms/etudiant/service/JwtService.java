@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -48,6 +49,46 @@ public class JwtService {
                 .expiration(Date.from(expiresAt))
                 .signWith(getSigningKey())
                 .compact();
+    }
+    /**
+     * Extract the username from a JWT.
+     */
+    public String extractUsername(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
+    }
+
+    /**
+     * Check that the token belongs to the given user and has not expired.
+     */
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        try {
+            String username = extractUsername(token);
+
+            return username.equals(userDetails.getUsername())
+                    && !isTokenExpired(token);
+
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Check whether the token has expired.
+     */
+    private boolean isTokenExpired(String token) {
+        Date expirationDate = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getExpiration();
+
+        return expirationDate.before(new Date());
     }
 
 }

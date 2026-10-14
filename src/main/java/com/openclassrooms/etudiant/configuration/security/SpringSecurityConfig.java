@@ -1,7 +1,8 @@
 package com.openclassrooms.etudiant.configuration.security;
 
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -14,29 +15,34 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor 
 public class SpringSecurityConfig {
 
-    @Autowired
-    private CustomUserDetailService customUserDetailService;
+    private final CustomUserDetailService customUserDetailService;
+
+    private final JwtAuthenticationFilter authenticationFilter;
 
     @Bean
-    public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(customUserDetailService);
+    DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider =
+                new DaoAuthenticationProvider(customUserDetailService);
+
         authProvider.setPasswordEncoder(passwordEncoder());
+
         return authProvider;
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+    AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
+    PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
@@ -52,9 +58,10 @@ public class SpringSecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/api/register", "/api/login").permitAll()
                         // Others protected routes will be added here.
+                        .requestMatchers("api/students/**").authenticated()
                         .anyRequest().authenticated()
                 )
-                // .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(
                         (request, response, exception) -> {
                             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, exception.getMessage());

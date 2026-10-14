@@ -1,5 +1,6 @@
 package com.openclassrooms.etudiant.service;
 
+import com.openclassrooms.etudiant.dto.RegisterDTO;
 import com.openclassrooms.etudiant.entities.User;
 import com.openclassrooms.etudiant.repository.UserRepository;
 import org.junit.jupiter.api.Assertions;
@@ -48,12 +49,19 @@ public class UserServiceTest {
         user.setLastName(LAST_NAME);
         user.setLogin(LOGIN);
         user.setPassword(PASSWORD);
+
+        RegisterDTO registerDTO = new RegisterDTO();
+        registerDTO.setFirstName(FIRST_NAME);
+        registerDTO.setLastName(LAST_NAME);
+        registerDTO.setLogin(LOGIN);
+        registerDTO.setPassword(PASSWORD);
+
         when(passwordEncoder.encode(PASSWORD)).thenReturn(PASSWORD);
         when(userRepository.findByLogin(any())).thenReturn(Optional.of(user));
 
         // THEN
         Assertions.assertThrows(IllegalArgumentException.class,
-                () -> userService.register(user));
+                () -> userService.register(registerDTO));
     }
 
     @Test
@@ -67,8 +75,14 @@ public class UserServiceTest {
         when(passwordEncoder.encode(PASSWORD)).thenReturn(PASSWORD);
         when(userRepository.findByLogin(any())).thenReturn(Optional.empty());
 
+        RegisterDTO registerDTO = new RegisterDTO();
+        registerDTO.setFirstName(FIRST_NAME);
+        registerDTO.setLastName(LAST_NAME);
+        registerDTO.setLogin(LOGIN);
+        registerDTO.setPassword(PASSWORD);
+
         // WHEN
-        userService.register(user);
+        userService.register(registerDTO);
 
         // THEN
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);

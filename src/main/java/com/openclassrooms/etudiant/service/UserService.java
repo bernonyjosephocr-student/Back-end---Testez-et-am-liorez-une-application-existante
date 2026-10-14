@@ -1,6 +1,8 @@
 package com.openclassrooms.etudiant.service;
 
+import com.openclassrooms.etudiant.dto.RegisterDTO;
 import com.openclassrooms.etudiant.entities.User;
+import com.openclassrooms.etudiant.mapper.UserDtoMapper;
 import com.openclassrooms.etudiant.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +22,11 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;    
     private final JwtService jwtService;
+    private final UserDtoMapper userDtoMapper;
 
-    public void register(User user) {
+    public void register(RegisterDTO registerDto) {
+        User user = userDtoMapper.toEntity(registerDto);
+        
         Assert.notNull(user, "User must not be null");
         log.info("Registering new user");
 
@@ -37,9 +42,10 @@ public class UserService {
         Assert.notNull(login, "Login must not be null");
         Assert.notNull(password, "Password must not be null");
         Optional<User> user = userRepository.findByLogin(login);
-        String userPassword = user.get().getPassword();
-        if (user.isPresent() && passwordEncoder.matches(password, userPassword)) {
-            return jwtService.generateToken(user.get());
+        User finalUser = user.orElseThrow(() -> new IllegalArgumentException("User with login " + login + " not found"));
+        String userPassword = finalUser.getPassword();
+        if (passwordEncoder.matches(password, userPassword)) {
+            return jwtService.generateToken(finalUser);
         } else {
             throw new IllegalArgumentException("Invalid credentials");
         }
