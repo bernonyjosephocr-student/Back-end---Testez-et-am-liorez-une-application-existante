@@ -32,6 +32,7 @@
 		<lombok.version>1.18.32</lombok.version>
 		<testcontainers.version>1.21.4</testcontainers.version>
 		<jwt.version>0.12.6</jwt.version>
+		<jacoco.version>0.8.14</jacoco.version>	
 	</properties>
 	<dependencies>
 		<dependency>
@@ -159,6 +160,25 @@
 				</configuration>
 
 			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>${jacoco.version}</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>			
 		</plugins>
 	</build>
 

@@ -2,6 +2,7 @@ package com.openclassrooms.etudiant.service;
 
 import com.openclassrooms.etudiant.dto.RegisterDTO;
 import com.openclassrooms.etudiant.entities.User;
+import com.openclassrooms.etudiant.mapper.UserDtoMapper;
 import com.openclassrooms.etudiant.repository.UserRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -29,11 +30,15 @@ public class UserServiceTest {
     private UserRepository userRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private UserDtoMapper userDtoMapper;
+    @Mock
+    private JwtService jwtService;
     @InjectMocks
     private UserService userService;
 
     @Test
-    public void test_create_null_user_throws_IllegalArgumentException() {
+    public void testCreateNullUserThrowsIllegalArgumentException() {
         // GIVEN
 
         // THEN
@@ -42,7 +47,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void test_create_already_exist_user_throws_IllegalArgumentException() {
+    public void testCreateAlreadyExistUserThrowsIllegalArgumentException() {
         // GIVEN
         User user = new User();
         user.setFirstName(FIRST_NAME);
@@ -65,7 +70,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void test_create_user() {
+    public void createUser() {
         // GIVEN
         User user = new User();
         user.setFirstName(FIRST_NAME);
@@ -74,6 +79,7 @@ public class UserServiceTest {
         user.setPassword(PASSWORD);
         when(passwordEncoder.encode(PASSWORD)).thenReturn(PASSWORD);
         when(userRepository.findByLogin(any())).thenReturn(Optional.empty());
+        when(userDtoMapper.toEntity(any())).thenReturn(user);
 
         RegisterDTO registerDTO = new RegisterDTO();
         registerDTO.setFirstName(FIRST_NAME);
@@ -88,5 +94,36 @@ public class UserServiceTest {
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(userCaptor.capture());
         assertThat(userCaptor.getValue()).isEqualTo(user);
+    }
+
+    @Test
+    public void loginWithValidCredentialsReturnsJwtToken() {
+        // GIVEN
+        User user = new User();
+        user.setFirstName(FIRST_NAME);
+        user.setLastName(LAST_NAME);
+        user.setLogin(LOGIN);
+        user.setPassword("encodedPassword");
+
+        String expectedToken = "mock.jwt.token";
+
+        when(userRepository.findByLogin(LOGIN))
+                .thenReturn(Optional.of(user));
+
+        when(passwordEncoder.matches(PASSWORD, "encodedPassword"))
+                .thenReturn(true);
+
+        when(jwtService.generateToken(user))
+                .thenReturn(expectedToken);
+
+        // WHEN
+        String actualToken = userService.login(LOGIN, PASSWORD);
+
+        // THEN
+        assertThat(actualToken).isEqualTo(expectedToken);
+
+        verify(userRepository).findByLogin(LOGIN);  //verify that the repository method was called with the correct login
+        verify(passwordEncoder).matches(PASSWORD, "encodedPassword"); //verify that the password encoder was called with the correct password and encoded password
+        verify(jwtService).generateToken(user); //verify that the JWT service was called to generate a token for the user
     }
 }
